@@ -97,7 +97,6 @@ def main():
                 last_titles = set(titles)
             else:
                 current = set(titles)
-                current.add("FAKE: Will Messi score vs Ronaldo?")
                 added = current - last_titles
                 if added:
                     msg = "New Market(s) Added!\n" + "\n".join(f"+ {t}" for t in added) + f"\n{URL}"
