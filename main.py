@@ -90,11 +90,14 @@ def main():
             print(f"[{ts}] Checking...", flush=True)
             titles = get_markets()
 
+            
+
             if last_titles is None:
                 send_telegram("Bot running")
                 last_titles = set(titles)
             else:
                 current = set(titles)
+                current.add("FAKE: Will Messi score vs Ronaldo?")
                 added = current - last_titles
                 if added:
                     msg = "New Market(s) Added!\n" + "\n".join(f"+ {t}" for t in added) + f"\n{URL}"
