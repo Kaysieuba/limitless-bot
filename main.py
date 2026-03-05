@@ -45,6 +45,14 @@ def get_markets():
         driver.quit()
 
     soup = BeautifulSoup(html, "html.parser")
+    # Debug - print all div classes
+all_classes = []
+for div in soup.find_all("div"):
+    for c in div.get("class", []):
+        if c not in all_classes:
+            all_classes.append(c)
+print("Classes found:", all_classes[:30])
+print("Page length:", len(html))
     cards = [div for div in soup.find_all("div") if MARKET_CLASS in div.get("class", [])]
 
     titles = []
