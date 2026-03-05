@@ -8,6 +8,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
+print("Script starting...", flush=True)
+
 URL = "https://limitless.exchange/markets/page/football?rv=XBTEB9UCJF&football-fan=off-the-pitch&sort=ending_soon"
 CHECK_INTERVAL_SECONDS = 10
 TELEGRAM_BOT_TOKEN = "8716981499:AAFCH2W5GybLsmWUZvYv08DjYRvx1Ieb7F8"
