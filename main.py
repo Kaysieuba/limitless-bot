@@ -79,6 +79,7 @@ def main():
             ts = datetime.now().strftime('%H:%M:%S')
             print(f"[{ts}] Checking...")
             titles = get_markets()
+            print(f"Markets found: {len(titles)} - {titles[:3]}")
 
             if last_titles is None:
                 send_telegram("Bot running")
