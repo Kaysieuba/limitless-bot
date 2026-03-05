@@ -2,6 +2,7 @@ import time, requests
 from datetime import datetime
 from bs4 import BeautifulSoup
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -25,7 +26,8 @@ def get_markets():
     options.binary_location = "/usr/bin/chromium"
 
 
-    driver = webdriver.Chrome(options=options)
+    service = Service("/usr/bin/chromedriver")
+    driver = webdriver.Chrome(service=service, options=options)
     try:
         driver.get(URL)
         print("Waiting for markets to load...")

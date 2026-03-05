@@ -16,6 +16,9 @@ WORKDIR /app\
 COPY requirements.txt .\
 RUN pip install -r requirements.txt\
 \
-COPY limitless_scraper.py .\
+COPY main.py .\
 \
-CMD ["python3", "limitless_scraper.py"]}
+ENV CHROME_BIN=/usr/bin/chromium\
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver\
+\
+CMD ["python3", "main.py"]}
