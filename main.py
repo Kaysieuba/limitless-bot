@@ -1,12 +1,7 @@
 import time, requests
 from datetime import datetime
 from bs4 import BeautifulSoup
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from playwright.sync_api import sync_playwright
 
 print("Script starting...", flush=True)
 
@@ -18,34 +13,13 @@ MARKET_CLASS = "css-pyffwl"
 TITLE_CLASS = "chakra-text css-2d8e7c"
 
 def get_markets():
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1280,720")
-    options.add_argument("--no-zygote")
-    options.add_argument("--single-process")
-    options.add_argument("--disable-extensions")
-    options.add_argument("--disable-images")
-    options.add_argument("--blink-settings=imagesEnabled=false")
-    options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
-    options.binary_location = "/usr/bin/chromium"
-    service = Service("/usr/bin/chromedriver")
-    driver = webdriver.Chrome(service=service, options=options)
-    try:
-        driver.get(URL)
-        print("Waiting for markets to load...", flush=True)
-        try:
-            WebDriverWait(driver, 20).until(
-                EC.presence_of_element_located((By.CLASS_NAME, MARKET_CLASS))
-            )
-        except:
-            print("Timed out - scraping what is loaded", flush=True)
-        time.sleep(2)
-        html = driver.page_source
-    finally:
-        driver.quit()
+    with sync_playwright() as p:
+        browser = p.firefox.launch(headless=True)
+        page = browser.new_page()
+        page.goto(URL, wait_until="networkidle", timeout=30000)
+        page.wait_for_selector(f".{MARKET_CLASS}", timeout=15000)
+        html = page.content()
+        browser.close()
 
     soup = BeautifulSoup(html, "html.parser")
     cards = [div for div in soup.find_all("div") if MARKET_CLASS in div.get("class", [])]
