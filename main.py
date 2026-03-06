@@ -23,7 +23,12 @@ def get_markets():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1920,1080")
+    options.add_argument("--window-size=1280,720")
+    options.add_argument("--no-zygote")
+    options.add_argument("--single-process")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-images")
+    options.add_argument("--blink-settings=imagesEnabled=false")
     options.add_argument("user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
     options.binary_location = "/usr/bin/chromium"
     service = Service("/usr/bin/chromedriver")
@@ -43,16 +48,6 @@ def get_markets():
         driver.quit()
 
     soup = BeautifulSoup(html, "html.parser")
-
-    # Debug - print page info and classes
-    print(f"Page length: {len(html)}", flush=True)
-    all_classes = []
-    for div in soup.find_all("div"):
-        for c in div.get("class", []):
-            if c not in all_classes:
-                all_classes.append(c)
-    print(f"Classes found: {all_classes[:30]}", flush=True)
-
     cards = [div for div in soup.find_all("div") if MARKET_CLASS in div.get("class", [])]
     print(f"Markets found: {len(cards)}", flush=True)
 
@@ -89,8 +84,6 @@ def main():
             ts = datetime.now().strftime('%H:%M:%S')
             print(f"[{ts}] Checking...", flush=True)
             titles = get_markets()
-
-            
 
             if last_titles is None:
                 send_telegram("Bot running")
