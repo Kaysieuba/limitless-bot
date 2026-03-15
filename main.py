@@ -49,25 +49,32 @@ def main():
     print("Market Checker Started", flush=True)
     print(f"Checking every {CHECK_INTERVAL_SECONDS}s\n", flush=True)
     last_titles = None
+    seen_ever = set()
+
     while True:
         try:
             ts = datetime.now().strftime('%H:%M:%S')
             print(f"[{ts}] Checking...", flush=True)
             titles = get_markets()
+
             if last_titles is None:
                 send_telegram("Bot running")
                 last_titles = set(titles)
+                seen_ever = set(titles)
             else:
                 current = set(titles)
-                added = current - last_titles
+                added = current - seen_ever
                 if added:
                     msg = "New Market(s) Added!\n" + "\n".join(f"+ {t}" for t in added) + f"\n{URL}"
                     send_telegram(msg)
+                    seen_ever.update(added)
                 else:
                     print("No change", flush=True)
                 last_titles = current
+
         except Exception as e:
             print(f"Error: {e}", flush=True)
+
         time.sleep(CHECK_INTERVAL_SECONDS)
 
 if __name__ == "__main__":
