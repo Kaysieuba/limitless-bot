@@ -1,40 +1,31 @@
 import time, requests
 from datetime import datetime
-from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
 
 print("Script starting...", flush=True)
 
-URL = "https://limitless.exchange/markets/page/football?rv=XBTEB9UCJF&football-fan=off-the-pitch&sort=ending_soon"
+API_URL = "https://api.limitless.exchange/market-pages/988c7086-0b65-43a9-b8a1-2b71387a2b72/markets?football-fan=off-the-pitch&page=1&limit=24&sort=deadline"
 CHECK_INTERVAL_SECONDS = 10
 TELEGRAM_BOT_TOKEN = "8716981499:AAFCH2W5GybLsmWUZvYv08DjYRvx1Ieb7F8"
 TELEGRAM_CHAT_ID = "5138327964"
-MARKET_CLASS = "css-pyffwl"
-TITLE_CLASS = "chakra-text css-2d8e7c"
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+    "Accept": "application/json",
+    "Referer": "https://limitless.exchange/",
+    "Origin": "https://limitless.exchange"
+}
 
 def get_markets():
-    with sync_playwright() as p:
-        browser = p.firefox.launch(headless=True)
-        page = browser.new_page()
-        page.goto(URL, wait_until="domcontentloaded", timeout=60000)
-        time.sleep(5)
-        try:
-            page.wait_for_selector(f".{MARKET_CLASS}", timeout=15000)
-        except:
-            print("Timed out waiting for markets", flush=True)
-        html = page.content()
-        browser.close()
-
-    soup = BeautifulSoup(html, "html.parser")
-    cards = [div for div in soup.find_all("div") if MARKET_CLASS in div.get("class", [])]
-    print(f"Markets found: {len(cards)}", flush=True)
-
+    r = requests.get(API_URL, headers=HEADERS, timeout=15)
+    r.raise_for_status()
+    data = r.json()
+    markets = data.get("data", [])
     titles = []
-    for card in cards[:20]:
-        p = card.find("p", class_=TITLE_CLASS)
-        if p:
-            titles.append(p.get_text(strip=True))
-
+    for m in markets[:20]:
+        title = m.get("title") or m.get("question") or m.get("slug") or ""
+        if title:
+            titles.append(title)
+    print(f"Markets found: {len(titles)}", flush=True)
     print(f"Titles: {titles[:3]}", flush=True)
     return titles
 
@@ -72,7 +63,7 @@ def main():
                 current = set(titles)
                 added = current - seen_ever
                 if added:
-                    msg = "New Market(s) Added!\n" + "\n".join(f"+ {t}" for t in added) + f"\n{URL}"
+                    msg = "New Market(s) Added!\n" + "\n".join(f"+ {t}" for t in added) + f"\n{API_URL}"
                     send_telegram(msg)
                     seen_ever.update(added)
                 else:
