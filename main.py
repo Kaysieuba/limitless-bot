@@ -3,7 +3,7 @@ from datetime import datetime
 
 print("Script starting...", flush=True)
 
-API_URL = "https://api.limitless.exchange/market-pages/988c7086-0b65-43a9-b8a1-2b71387a2b72/markets?football-fan=off-the-pitch&page=1&limit=24&sort=deadline"
+BASE_URL = "https://api.limitless.exchange/market-pages/988c7086-0b65-43a9-b8a1-2b71387a2b72/markets?football-fan=off-the-pitch&page={page}&limit=24&sort=deadline"
 CHECK_INTERVAL_SECONDS = 10
 TELEGRAM_BOT_TOKEN = "8716981499:AAFCH2W5GybLsmWUZvYv08DjYRvx1Ieb7F8"
 TELEGRAM_CHAT_ID = "5138327964"
@@ -16,15 +16,20 @@ HEADERS = {
 }
 
 def get_markets():
-    r = requests.get(API_URL, headers=HEADERS, timeout=15)
-    r.raise_for_status()
-    data = r.json()
-    markets = data.get("data", [])
     titles = []
-    for m in markets[:20]:
-        title = m.get("title") or m.get("question") or m.get("slug") or ""
-        if title:
-            titles.append(title)
+    for page in range(1, 3):  # fetch page 1 and page 2
+        url = BASE_URL.format(page=page)
+        r = requests.get(url, headers=HEADERS, timeout=15)
+        r.raise_for_status()
+        data = r.json()
+        markets = data.get("data", [])
+        for m in markets:
+            title = m.get("title") or m.get("question") or m.get("slug") or ""
+            if title:
+                titles.append(title)
+        if len(markets) < 24:  # no more pages
+            break
+    titles = titles[:35]  # cap at 35
     print(f"Markets found: {len(titles)}", flush=True)
     print(f"Titles: {titles[:3]}", flush=True)
     return titles
@@ -63,7 +68,7 @@ def main():
                 current = set(titles)
                 added = current - seen_ever
                 if added:
-                    msg = "New Market(s) Added!\n" + "\n".join(f"+ {t}" for t in added) + f"\n{API_URL}"
+                    msg = "New Market(s) Added!\n" + "\n".join(f"+ {t}" for t in added) + f"\nhttps://limitless.exchange/markets/page/football?rv=XBTEB9UCJF&football-fan=off-the-pitch&sort=ending_soon"
                     send_telegram(msg)
                     seen_ever.update(added)
                 else:
