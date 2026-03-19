@@ -16,18 +16,25 @@ def get_markets():
     with sync_playwright() as p:
         browser = p.firefox.launch(headless=True)
         page = browser.new_page()
-        page.goto(URL, wait_until="networkidle", timeout=30000)
-        page.wait_for_selector(f".{MARKET_CLASS}", timeout=15000)
+        page.goto(URL, wait_until="domcontentloaded", timeout=60000)
+        time.sleep(5)
+        try:
+            page.wait_for_selector(f".{MARKET_CLASS}", timeout=15000)
+        except:
+            print("Timed out waiting for markets", flush=True)
         html = page.content()
         browser.close()
+
     soup = BeautifulSoup(html, "html.parser")
     cards = [div for div in soup.find_all("div") if MARKET_CLASS in div.get("class", [])]
     print(f"Markets found: {len(cards)}", flush=True)
+
     titles = []
     for card in cards[:20]:
         p = card.find("p", class_=TITLE_CLASS)
         if p:
             titles.append(p.get_text(strip=True))
+
     print(f"Titles: {titles[:3]}", flush=True)
     return titles
 
