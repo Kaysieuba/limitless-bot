@@ -4,6 +4,7 @@ from datetime import datetime
 print("Script starting...", flush=True)
 
 BASE_URL = "https://api.limitless.exchange/market-pages/988c7086-0b65-43a9-b8a1-2b71387a2b72/markets?football-fan=off-the-pitch&page={page}&limit=24&sort=deadline"
+MARKET_URL = "https://limitless.exchange/markets/{slug}"
 CHECK_INTERVAL_SECONDS = 10
 TELEGRAM_BOT_TOKEN = "8716981499:AAFCH2W5GybLsmWUZvYv08DjYRvx1Ieb7F8"
 TELEGRAM_CHAT_ID = "5138327964"
@@ -16,23 +17,24 @@ HEADERS = {
 }
 
 def get_markets():
-    titles = []
-    for page in range(1, 3):  # fetch page 1 and page 2
+    markets = []
+    for page in range(1, 3):
         url = BASE_URL.format(page=page)
         r = requests.get(url, headers=HEADERS, timeout=15)
         r.raise_for_status()
         data = r.json()
-        markets = data.get("data", [])
-        for m in markets:
+        items = data.get("data", [])
+        for m in items:
             title = m.get("title") or m.get("question") or m.get("slug") or ""
-            if title:
-                titles.append(title)
-        if len(markets) < 24:  # no more pages
+            slug = m.get("slug") or ""
+            if title and slug:
+                markets.append({"title": title, "slug": slug})
+        if len(items) < 24:
             break
-    titles = titles[:35]  # cap at 35
-    print(f"Markets found: {len(titles)}", flush=True)
-    print(f"Titles: {titles[:3]}", flush=True)
-    return titles
+    markets = markets[:35]
+    print(f"Markets found: {len(markets)}", flush=True)
+    print(f"First: {markets[0]['title'] if markets else 'none'}", flush=True)
+    return markets
 
 def send_telegram(message):
     try:
@@ -51,29 +53,33 @@ def send_telegram(message):
 def main():
     print("Market Checker Started", flush=True)
     print(f"Checking every {CHECK_INTERVAL_SECONDS}s\n", flush=True)
-    last_titles = None
+    last_slugs = None
     seen_ever = set()
 
     while True:
         try:
             ts = datetime.now().strftime('%H:%M:%S')
             print(f"[{ts}] Checking...", flush=True)
-            titles = get_markets()
+            markets = get_markets()
+            current_slugs = {m["slug"] for m in markets}
 
-            if last_titles is None:
+            if last_slugs is None:
                 send_telegram("Bot running")
-                last_titles = set(titles)
-                seen_ever = set(titles)
+                last_slugs = current_slugs
+                seen_ever = current_slugs.copy()
             else:
-                current = set(titles)
-                added = current - seen_ever
-                if added:
-                    msg = "New Market(s) Added!\n" + "\n".join(f"+ {t}" for t in added) + f"\nhttps://limitless.exchange/markets/page/football?rv=XBTEB9UCJF&football-fan=off-the-pitch&sort=ending_soon"
-                    send_telegram(msg)
-                    seen_ever.update(added)
+                added_slugs = current_slugs - seen_ever
+                if added_slugs:
+                    new_markets = [m for m in markets if m["slug"] in added_slugs]
+                    lines = ["New Market(s) Added!"]
+                    for m in new_markets:
+                        link = MARKET_URL.format(slug=m["slug"])
+                        lines.append(f"+ {m['title']}\n{link}")
+                    send_telegram("\n\n".join(lines))
+                    seen_ever.update(added_slugs)
                 else:
                     print("No change", flush=True)
-                last_titles = current
+                last_slugs = current_slugs
 
         except Exception as e:
             print(f"Error: {e}", flush=True)
