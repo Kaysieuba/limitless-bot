@@ -31,7 +31,7 @@ def get_markets():
                 markets.append({"title": title, "slug": slug})
         if len(items) < 24:
             break
-    markets = markets[:48]
+    markets = markets[:96]
     print(f"Markets found: {len(markets)}", flush=True)
     print(f"First: {markets[0]['title'] if markets else 'none'}", flush=True)
     return markets
